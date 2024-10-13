@@ -27,7 +27,7 @@ const UserSchema = new Schema<IUser>({
     name: {
         type: String,
         required: true,
-        unique: true
+        unique: false
     },
     password: {
         type: String,
@@ -41,7 +41,7 @@ const UserSchema = new Schema<IUser>({
     email: {
         type: String,  
         required: true,
-        unique: true
+        unique: false
     },
     className: {
         type: String, 
@@ -63,8 +63,11 @@ UserSchema.methods.comparePassword = async function (userPassword: string): Prom
 }
 
 // יצירת אינדקסים
-// UserSchema.index({ role: 1 });
-// UserSchema.index({ name: 1 });
+UserSchema.index({ role: 1 });
+UserSchema.index({ name: 1 });
 
 export default mongoose.model<IUser>("User", UserSchema);
 export const Grades = model<IGrades>('Grades', gradeSchema);
+
+//נתיב לסוואגר
+// http://localhost:3000/api-docs/

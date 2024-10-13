@@ -1,7 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import connectDB from './servicece/db';
-import authRoutes from './userRoutes/authRoutes';
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
 import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
@@ -34,6 +35,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
 connectDB();
 
 app.use('/auth', authRoutes);
+app.use('/users', userRoutes)
 
 const PORT = process.env.PORT || 3000;
 

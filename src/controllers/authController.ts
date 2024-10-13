@@ -44,3 +44,29 @@ export const register = async (req: Request, res: Response) => {
         res.status(400).json("תקלה בהרשמה");
     }
 }
+
+// התחברות של משתמש קיים
+export const login = async (req: Request, res: Response) => {
+    const { name, password } = req.body;
+
+    const user = await User.findOne({ name });
+
+    if (!user || (await user.comparePassword(password))) {
+        res.status(401).json({ message: "שם משתמש או סיסמה שגויים" })
+        return
+    };
+
+    const token = generateToken(user.id, user.role);
+    res.cookie('token', token, {
+        httpOnly:true,
+        secure: false,
+        maxAge: 3600000
+    })
+     // החזרת התגובה עם מזהה המשתמש וההצלחה
+     if (user.role === 'Teacher') {
+        res.status(200).json({ message: "התחברת בהצלחה אדוני המרצה", userId: user.id, token });
+    } else {
+        res.status(200).json({ message: "התחברת בהצלחה תלמיד", userId: user.id, token });
+    }
+
+}
