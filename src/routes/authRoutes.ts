@@ -7,5 +7,3 @@ router.post('/register', register)
 
 
 export default router;
-
-
