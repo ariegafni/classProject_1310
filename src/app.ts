@@ -1,12 +1,10 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import  connectDB  from './servicece/db';
-import authRoutes from './userRoutes.ts/authRoutes'
-// import userRoutes from './routes/userRoutes';
+import connectDB from './servicece/db';
+import authRoutes from './userRoutes/authRoutes';
 import cookieParser from 'cookie-parser';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-
 
 dotenv.config();
 
@@ -27,7 +25,7 @@ const options = {
             },
         ]
     },
-    apis: ['./src/routes/*.ts'], // files containing annotations as above
+    apis: ['./src/routes/*.ts'],
 };
 
 const openapiSpecification = swaggerJsdoc(options);
@@ -36,13 +34,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpecification))
 connectDB();
 
 app.use('/auth', authRoutes);
-// app.use('/users', userRoutes)
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`);
-})
-
-//נתיב לסוואגר
-// http://localhost:3000/api-docs/
+});

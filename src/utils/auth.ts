@@ -1,5 +1,12 @@
 import jwt from 'jsonwebtoken';
 
-export const generateToken = (userId: string, role: string) => {
-    return jwt.sign({ userId, role }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+export const generateToken = (id: string, role: string) => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error("JWT secret is not defined");
+    }
+
+    return jwt.sign({ id, role }, secret, {
+        expiresIn: '1h',
+    });
 };
