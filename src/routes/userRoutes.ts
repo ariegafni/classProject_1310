@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login } from '../controllers/authController';
+import { register, login, addGrade } from '../controllers/authController';
 import { getUsers } from '../controllers/userController';
 import { authMiddleware, managerAuthMiddleware } from '../middleware/authMiddleware';
 import { errorHandler } from '../utils/errorHandler';
@@ -11,7 +11,7 @@ const router = express.Router();
  * /auth/register:
  *   post:
  *     summary: רישום משתמש חדש
- *     description: יוצר חשבון משתמש חדש במערכת. אם המשתמש הוא מנהל, מחזיר טוקן ב-cookie.
+ *     description: יוצר חשבון משתמש חדש במערכת.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -20,26 +20,28 @@ const router = express.Router();
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - name
  *               - password
  *               - role
  *             properties:
- *               username:
+ *               name:
  *                 type: string
  *               password:
  *                 type: string
  *               role:
  *                 type: string
- *                 enum: [employee, manager]
- *               salary:
- *                 type: number
- *               yearsOfExperience:
- *                 type: number
- *               startDate:
+ *                 enum: [Student, Teacher]
+ *               className:
  *                 type: string
- *                 format: date
- *               age:
- *                 type: number
+ *               grades:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     score:
+ *                       type: number
+ *                     comment:
+ *                       type: string
  *     responses:
  *       201:
  *         description: המשתמש נרשם בהצלחה
@@ -50,28 +52,19 @@ const router = express.Router();
  *               properties:
  *                 message:
  *                   type: string
- *                 isManager:
- *                   type: boolean
  *                 userId:
  *                   type: string
- *         headers:
- *           Set-Cookie:
- *             schema:
- *               type: string
- *               example: token=abcde12345; HttpOnly; Secure; SameSite=Strict
  *       400:
  *         description: שגיאה בנתונים שהוזנו
  */
-
 router.post('/auth/register', register);
 
-/**
 /**
  * @swagger
  * /users/login:
  *   post:
  *     summary: התחברות למערכת
- *     description: מאמת את פרטי המשתמש ומחזיר טוקן ב-cookie אם המשתמש הוא מנהל.
+ *     description: מאמת את פרטי המשתמש על פי שם (name) וסיסמה ומחזיר טוקן ב-cookie אם ההתחברות הצליחה.
  *     tags: [Authentication]
  *     requestBody:
  *       required: true
@@ -80,10 +73,10 @@ router.post('/auth/register', register);
  *           schema:
  *             type: object
  *             required:
- *               - username
+ *               - name
  *               - password
  *             properties:
- *               username:
+ *               name:
  *                 type: string
  *               password:
  *                 type: string
@@ -97,25 +90,21 @@ router.post('/auth/register', register);
  *               properties:
  *                 message:
  *                   type: string
- *                 isManager:
- *                   type: boolean
  *                 userId:
  *                   type: string
- *         headers:
- *           Set-Cookie:
- *             schema:
- *               type: string
- *               example: token=abcde12345; HttpOnly; Secure; SameSite=Strict
+ *                 token:
+ *                   type: string
  *       401:
  *         description: שם משתמש או סיסמה שגויים
  */
+router.post('/login', login);
 
 /**
  * @swagger
  * /users:
  *   get:
  *     summary: קבלת כל המשתמשים
- *     description: תחזיר רשימה של כל המשתמשים. זמין רק למנהלים
+ *     description: תחזיר רשימה של כל המשתמשים. זמין רק למנהלים.
  *     security:
  *       - cookieAuth: []
  *     responses:
@@ -123,13 +112,67 @@ router.post('/auth/register', register);
  *         description: רשימת משתמשים הוחזרה בהצלחה
  *       401:
  *         description: לא מורשה, נדרשת התחברות
- *       403: 
+ *       403:
  *         description: נדרשת הרשאת מנהל
  */
 router.get("/", authMiddleware, managerAuthMiddleware, errorHandler(getUsers));
 
-router.post('/auth/login', login);
+/**
+ * @swagger
+ * /users/add-grade:
+ *   post:
+ *     summary: הוספת ציון לתלמיד
+ *     description: מאפשר למורה להוסיף ציון לתלמיד בכיתה שלו.
+ *     tags: [Grades]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - studentId
+ *               - score
+ *             properties:
+ *               studentId:
+ *                 type: string
+ *                 description: מזהה התלמיד
+ *               score:
+ *                 type: number
+ *                 description: הציון שניתן לתלמיד
+ *               comment:
+ *                 type: string
+ *                 description: הערה על הציון (לא חובה)
+ *     responses:
+ *       201:
+ *         description: הציון נוסף בהצלחה
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 grades:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       score:
+ *                         type: number
+ *                       comment:
+ *                         type: string
+ *       400:
+ *         description: התלמיד אינו שייך לכיתה הזו או שגיאה בנתונים שהוזנו
+ *       403:
+ *         description: רק מרצים יכולים להוסיף ציונים
+ *       404:
+ *         description: הכיתה או התלמיד לא נמצאו
+ */
 
-
+// הוספת ציון לתלמיד (רק למורים)
+router.post("/add-grade", authMiddleware, addGrade);
 
 export default router;
